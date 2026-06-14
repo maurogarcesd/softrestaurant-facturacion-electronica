@@ -124,9 +124,16 @@ try {
 
         case 'reset_payloads':
             // Borra el json_payload de todos los registros que NO están ENVIADOS,
-            // para que el Watcher los regenere con el proveedor activo.
+            // preservando el estado OMITIDA y su ultimo_error para evitar re-encolar
+            // facturas que fueron omitidas a menos que sea forzado.
             $provider = ProviderFactory::getProvider();
-            $stmt = $mysql->prepare("UPDATE integracion_facturacion SET json_payload = NULL, estado = 'EN_COLA', ultimo_error = NULL WHERE estado != 'ENVIADO'");
+            $stmt = $mysql->prepare("
+                UPDATE integracion_facturacion 
+                SET json_payload = NULL, 
+                    estado = CASE WHEN estado = 'OMITIDA' THEN 'OMITIDA' ELSE 'EN_COLA' END, 
+                    ultimo_error = CASE WHEN estado = 'OMITIDA' THEN ultimo_error ELSE NULL END 
+                WHERE estado != 'ENVIADO'
+            ");
             $stmt->execute();
             $affected = $stmt->rowCount();
             echo json_encode(['status' => 'success', 'message' => "$affected registro(s) reseteados. El Watcher regenerará los payloads con proveedor: {$provider}."]);
@@ -358,18 +365,106 @@ try {
 
             $endpoint = $provider === 'datainvoice' ? 'invoice' : 'v2/bills/validate';
 
-            $response = $client->post($endpoint, [
-                'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
-                'json' => $payload,
-                'http_errors' => false
-            ]);
+            $factusId = $factura['factus_invoice_id'] ?? null;
+            $isDirectQuery = false;
 
-            $result = json_decode($response->getBody()->getContents(), true);
+            if ($provider === 'factus' && !empty($factusId)) {
+                $isDirectQuery = true;
+                $response = $client->get("v2/bills/{$factusId}", [
+                    'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                    'http_errors' => false
+                ]);
+
+                // Si la consulta directa da 404 o 400, borramos el ID huerfano y reintentamos con POST limpio
+                if ($response->getStatusCode() === 404 || $response->getStatusCode() === 400) {
+                    $isDirectQuery = false;
+                    $factusId = null;
+                    $stmtReset = $mysql->prepare("UPDATE integracion_facturacion SET factus_invoice_id = NULL WHERE id = ?");
+                    $stmtReset->execute([$id]);
+                    
+                    $response = $client->post($endpoint, [
+                        'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                        'json' => $payload,
+                        'http_errors' => false
+                    ]);
+                }
+            } else {
+                $response = $client->post($endpoint, [
+                    'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                    'json' => $payload,
+                    'http_errors' => false
+                ]);
+            }
+
             $statusCode = $response->getStatusCode();
+            $result = json_decode($response->getBody()->getContents(), true);
             $apiResponseStr = json_encode($result, JSON_UNESCAPED_UNICODE);
 
+            // ── Recuperación de Conflicto 409 (Factura ya existente) ────────
+            if ($provider === 'factus' && $statusCode === 409) {
+                $referenceCode = $payload['reference_code'] ?? null;
+                if ($referenceCode) {
+                    $checkResponse = $client->get('v2/bills', [
+                        'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                        'query' => [
+                            'filter' => [
+                                'reference_code' => $referenceCode
+                            ]
+                        ],
+                        'http_errors' => false
+                    ]);
+                    
+                    if ($checkResponse->getStatusCode() === 200) {
+                        $checkResult = json_decode($checkResponse->getBody()->getContents(), true);
+                        $billsList = [];
+                        if (isset($checkResult['data']['data']) && is_array($checkResult['data']['data'])) {
+                            $billsList = $checkResult['data']['data'];
+                        } elseif (isset($checkResult['data']) && is_array($checkResult['data'])) {
+                            $billsList = $checkResult['data'];
+                        }
+                        
+                        $matchedBill = null;
+                        foreach ($billsList as $bill) {
+                            if (($bill['reference_code'] ?? '') === $referenceCode) {
+                                $matchedBill = $bill;
+                                break;
+                            }
+                        }
+                        
+                        if ($matchedBill) {
+                            $factusId = $matchedBill['number'] ?? $matchedBill['id'] ?? 'OK';
+                            $isValidated = $matchedBill['is_validated'] ?? false;
+                            $isValidated = ($isValidated === true || $isValidated === 1 || $isValidated === '1');
+                            
+                            if ($isValidated) {
+                                // 1. Si ya está validada, no la borramos, la sincronizamos directo
+                                $statusCode = 200;
+                                $result = ['data' => $matchedBill];
+                                $apiResponseStr = json_encode($result, JSON_UNESCAPED_UNICODE);
+                            } else {
+                                // 2. Si no está validada, la eliminamos y volvemos a intentar el POST
+                                $deleteResponse = $client->delete("v2/bills/destroy/reference/{$referenceCode}", [
+                                    'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                                    'http_errors' => false
+                                ]);
+                                
+                                // Intentamos el POST limpio nuevamente
+                                $response = $client->post($endpoint, [
+                                    'headers' => ['Authorization' => "Bearer {$token}", 'Accept' => 'application/json'],
+                                    'json' => $payload,
+                                    'http_errors' => false
+                                ]);
+                                
+                                $statusCode = $response->getStatusCode();
+                                $result = json_decode($response->getBody()->getContents(), true);
+                                $apiResponseStr = json_encode($result, JSON_UNESCAPED_UNICODE);
+                            }
+                        }
+                    }
+                }
+            }
+
             $isSuccess = false;
-            $factusId = 'OK';
             $errorMessage = '';
 
             if ($provider === 'datainvoice') {
@@ -414,9 +509,33 @@ try {
             } else {
                 $isSuccess = ($statusCode === 200 || $statusCode === 201);
                 if ($isSuccess) {
-                    $factusId = $result['data']['number'] ?? 'OK';
+                    $factusId = $result['data']['bill']['number'] ?? $result['data']['number'] ?? $result['number'] ?? $factusId ?? 'OK';
+                    
+                    $isValidated = true;
+                    if (isset($result['data']['bill']['is_validated'])) {
+                        $isValidated = $result['data']['bill']['is_validated'];
+                    } elseif (isset($result['data']['is_validated'])) {
+                        $isValidated = $result['data']['is_validated'];
+                    } elseif (isset($result['is_validated'])) {
+                        $isValidated = $result['is_validated'];
+                    }
+
+                    $errorsObj = $result['data']['bill']['errors'] ?? $result['data']['errors'] ?? $result['errors'] ?? null;
+                    $errorsStr = is_array($errorsObj) ? json_encode($errorsObj, JSON_UNESCAPED_UNICODE) : (string)$errorsObj;
+                    
+                    $hasRechazo = stripos($errorsStr, 'rechazo') !== false;
+
+                    if (!$isValidated && !$hasRechazo) {
+                        // Demora DIAN
+                        $isSuccess = false;
+                        $errorMessage = "DIAN_PENDING|La factura se encuentra registrada en Factus como {$factusId}, pero está pendiente por enviar o procesar ante la DIAN.";
+                    } elseif (!$isValidated && $hasRechazo) {
+                        // Rechazo explícito
+                        $isSuccess = false;
+                        $errorMessage = "Rechazo DIAN: {$errorsStr}";
+                    }
                 } else {
-                    $errorMessage = json_encode($result);
+                    $errorMessage = json_encode($result, JSON_UNESCAPED_UNICODE);
                 }
             }
 
@@ -426,11 +545,19 @@ try {
                 $stmtUpdate->execute([$factusId, $apiResponseStr, $id]);
                 echo json_encode(['status' => 'success', 'message' => 'Enviada con éxito']);
             } else {
-                // Truncar ultimo_error a 1000 caracteres para evitar errores de SQL
-                $safeError = mb_substr($errorMessage, 0, 1000);
-                $stmtUpdate = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'ERROR', ultimo_error = ?, api_response = ?, intentos = intentos + 1 WHERE id = ?");
-                $stmtUpdate->execute([$safeError, $apiResponseStr, $id]);
-                throw new Exception("Error de Envío: " . $errorMessage);
+                if (str_starts_with($errorMessage, 'DIAN_PENDING|')) {
+                    $msgText = substr($errorMessage, 13);
+                    $stmtUpdate = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'EN_COLA', ultimo_error = ?, factus_invoice_id = ?, api_response = ?, intentos = intentos + 1 WHERE id = ?");
+                    $stmtUpdate->execute([$msgText, $factusId, $apiResponseStr, $id]);
+                    // Responder JSON con status error pero mensaje amigable
+                    echo json_encode(['status' => 'error', 'message' => $msgText]);
+                } else {
+                    // Truncar ultimo_error a 1000 caracteres para evitar errores de SQL
+                    $safeError = mb_substr($errorMessage, 0, 1000);
+                    $stmtUpdate = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'ERROR', ultimo_error = ?, api_response = ?, intentos = intentos + 1 WHERE id = ?");
+                    $stmtUpdate->execute([$safeError, $apiResponseStr, $id]);
+                    throw new Exception("Error de Envío: " . $errorMessage);
+                }
             }
             break;
 
@@ -490,7 +617,6 @@ try {
                 }
             }
             break;
-
 
         case 'company_info':
             $provider = ProviderFactory::getProvider();

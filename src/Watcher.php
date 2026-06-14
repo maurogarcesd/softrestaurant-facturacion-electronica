@@ -69,7 +69,7 @@ class Watcher {
             $idFacturacion = $serie !== '' ? "{$serie}-{$numCheque}" : ($numCheque !== '' ? $numCheque : "{$origen}_{$folioDb}");
 
             // 2. Revisar si ya existe en MySQL
-            $stmtCheck = $mysql->prepare("SELECT id, json_payload FROM integracion_facturacion WHERE id_factura_sr = ?");
+            $stmtCheck = $mysql->prepare("SELECT id, json_payload, estado, ultimo_error FROM integracion_facturacion WHERE id_factura_sr = ?");
             $stmtCheck->execute([$idFacturacion]);
             $existe = $stmtCheck->fetch();
 
@@ -126,13 +126,23 @@ class Watcher {
 
                 // 6. Guardar en la base de datos
                 if ($existe) {
+                    // Si ya existía, queremos regenerar su json_payload pero preservar su estado original (ej. OMITIDA, EN_COLA)
+                    // a menos que el estado calculado final sea ERROR por motivos legales (como tope de 5 UVT).
+                    $nuevoEstado = $existe['estado'];
+                    $nuevoError = $existe['ultimo_error'] ?? $errorGuardado;
+
+                    if ($estadoFinal === 'ERROR') {
+                        $nuevoEstado = 'ERROR';
+                        $nuevoError = $errorGuardado;
+                    }
+
                     $stmtUpdate = $mysql->prepare("
                         UPDATE integracion_facturacion 
                         SET json_payload = ?, estado = ?, ultimo_error = ? 
                         WHERE id = ?
                     ");
-                    $stmtUpdate->execute([$jsonPayload, $estadoFinal, $errorGuardado, $existe['id']]);
-                    echo "♻️ Factura $idFacturacion regenerada con éxito.\n";
+                    $stmtUpdate->execute([$jsonPayload, $nuevoEstado, $nuevoError, $existe['id']]);
+                    echo "♻️ Factura $idFacturacion regenerada con éxito (Estado conservado: $nuevoEstado).\n";
                 } else {
                     $stmtInsert = $mysql->prepare("
                         INSERT INTO integracion_facturacion 

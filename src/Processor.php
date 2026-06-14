@@ -128,16 +128,31 @@ class Processor
                 continue;
             }
 
+            $factusId = $factura['factus_invoice_id'] ?? null;
+            $isDirectQuery = false;
+
             try {
-                $endpoint = $provider === 'datainvoice' ? 'invoice' : 'v2/bills/validate';
-                
-                $response = $this->apiClient->post($endpoint, [
-                    'headers' => [
-                        'Authorization' => "Bearer {$token}",
-                        'Accept'        => 'application/json',
-                    ],
-                    'json' => $payload
-                ]);
+                if ($provider === 'factus' && !empty($factusId)) {
+                    $isDirectQuery = true;
+                    echo "🔍 Factura $idFacturaSR ya tiene ID de Factus ($factusId). Consultando su estado en la API...\n";
+                    
+                    $response = $this->apiClient->get("v2/bills/{$factusId}", [
+                        'headers' => [
+                            'Authorization' => "Bearer {$token}",
+                            'Accept'        => 'application/json',
+                        ]
+                    ]);
+                } else {
+                    $endpoint = $provider === 'datainvoice' ? 'invoice' : 'v2/bills/validate';
+                    
+                    $response = $this->apiClient->post($endpoint, [
+                        'headers' => [
+                            'Authorization' => "Bearer {$token}",
+                            'Accept'        => 'application/json',
+                        ],
+                        'json' => $payload
+                    ]);
+                }
 
                 $result = json_decode($response->getBody()->getContents(), true);
                 $apiResponseStr = json_encode($result, JSON_UNESCAPED_UNICODE);
@@ -168,7 +183,7 @@ class Processor
                     
                     if ($isSuccess) {
                         // Extracción robusta del número de factura para Factus V2
-                        $factusId = $result['data']['bill']['number'] ?? $result['data']['number'] ?? $result['number'] ?? 'OK';
+                        $factusId = $result['data']['bill']['number'] ?? $result['data']['number'] ?? $result['number'] ?? $factusId ?? 'OK';
                         
                         // Buscar el flag is_validated (puede venir en distintos niveles según V1 o V2)
                         $isValidated = true;
@@ -188,7 +203,7 @@ class Processor
 
                         if (!$isValidated && !$hasRechazo) {
                             // Demora de la DIAN: HTTP 200 OK, pero no validada y sin rechazo explícito
-                            throw new \Exception("DIAN_TIMEOUT|" . json_encode($result, JSON_UNESCAPED_UNICODE));
+                            throw new \Exception("DIAN_TIMEOUT|" . json_encode($result, JSON_UNESCAPED_UNICODE) . "|" . $factusId);
                         } elseif (!$isValidated && $hasRechazo) {
                             // Rechazo directo devuelto como HTTP 200
                             throw new \Exception("RECHAZO_DIAN|" . $errorsStr);
@@ -221,6 +236,126 @@ class Processor
 
             } catch (RequestException $e) {
                 $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+                $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : 0;
+
+                // Si es consulta directa y devuelve 404 o 400, limpiamos ID local para que en la próxima intente un POST limpio
+                if ($isDirectQuery && ($statusCode === 404 || $statusCode === 400)) {
+                    echo "⚠️ Factura con ID $factusId devolvió HTTP {$statusCode}. Limpiando ID local para reintento POST...\n";
+                    $stmtReset = $mysql->prepare("UPDATE integracion_facturacion SET factus_invoice_id = NULL, ultimo_error = ?, intentos = intentos + 1 WHERE id = ?");
+                    $stmtReset->execute(["ID de Factus inválido ({$statusCode}). Se limpió el ID para reintentar creación.", $id]);
+                    continue;
+                }
+
+                // Si es conflicto 409, intentamos recuperar por reference_code
+                if ($provider === 'factus' && $statusCode === 409) {
+                    echo "⚠️ Conflicto 409 detectado en factura $idFacturaSR. Recuperando por reference_code...\n";
+                    try {
+                        $referenceCode = $payload['reference_code'] ?? null;
+                        if ($referenceCode) {
+                            $checkResponse = $this->apiClient->get('v2/bills', [
+                                'headers' => [
+                                    'Authorization' => "Bearer {$token}",
+                                    'Accept'        => 'application/json',
+                                ],
+                                'query' => [
+                                    'filter' => [
+                                        'reference_code' => $referenceCode
+                                    ]
+                                ]
+                            ]);
+                            $checkResult = json_decode($checkResponse->getBody()->getContents(), true);
+                            
+                            $billsList = [];
+                            if (isset($checkResult['data']['data']) && is_array($checkResult['data']['data'])) {
+                                $billsList = $checkResult['data']['data'];
+                            } elseif (isset($checkResult['data']) && is_array($checkResult['data'])) {
+                                $billsList = $checkResult['data'];
+                            }
+                            
+                            $matchedBill = null;
+                            foreach ($billsList as $bill) {
+                                if (($bill['reference_code'] ?? '') === $referenceCode) {
+                                    $matchedBill = $bill;
+                                    break;
+                                }
+                            }
+                            
+                            if ($matchedBill) {
+                                $factusId = $matchedBill['number'] ?? $matchedBill['id'] ?? 'OK';
+                                $isValidated = $matchedBill['is_validated'] ?? false;
+                                $isValidated = ($isValidated === true || $isValidated === 1 || $isValidated === '1');
+                                
+                                $errorsObj = $matchedBill['errors'] ?? null;
+                                $errorsStr = is_array($errorsObj) ? json_encode($errorsObj, JSON_UNESCAPED_UNICODE) : (string)$errorsObj;
+                                $hasRechazo = stripos($errorsStr, 'rechazo') !== false;
+                                
+                                if ($isValidated) {
+                                    // 1. Si ya está validada, no la borramos, la sincronizamos directo
+                                    $stmtUpdate = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'ENVIADO', factus_invoice_id = ?, api_response = ? WHERE id = ?");
+                                    $stmtUpdate->execute([$factusId, json_encode($matchedBill, JSON_UNESCAPED_UNICODE), $id]);
+                                    echo "✅ Factura $idFacturaSR resuelta de conflicto 409 (ya validada en Factus). Estado: ENVIADO.\n";
+                                    continue;
+                                } else {
+                                    // 2. Si no está validada, eliminamos en Factus y volvemos a intentar POST
+                                    echo "🗑️ Factura $idFacturaSR no está validada en Factus. Eliminando factura previa en Factus (reference_code: $referenceCode) para reintentar...\n";
+                                    
+                                    $deleteResponse = $this->apiClient->delete("v2/bills/destroy/reference/{$referenceCode}", [
+                                        'headers' => [
+                                            'Authorization' => "Bearer {$token}",
+                                            'Accept'        => 'application/json',
+                                        ]
+                                    ]);
+                                    
+                                    echo "🔄 Reintentando creación de factura $idFacturaSR tras eliminación...\n";
+                                    
+                                    $response = $this->apiClient->post('v2/bills/validate', [
+                                        'headers' => [
+                                            'Authorization' => "Bearer {$token}",
+                                            'Accept'        => 'application/json',
+                                        ],
+                                        'json' => $payload
+                                    ]);
+                                    
+                                    $result = json_decode($response->getBody()->getContents(), true);
+                                    $apiResponseStr = json_encode($result, JSON_UNESCAPED_UNICODE);
+                                    $isSuccess = ($response->getStatusCode() === 200 || $response->getStatusCode() === 201);
+                                    
+                                    if ($isSuccess) {
+                                        $factusId = $result['data']['bill']['number'] ?? $result['data']['number'] ?? $result['number'] ?? 'OK';
+                                        
+                                        $isValidated = true;
+                                        if (isset($result['data']['bill']['is_validated'])) {
+                                            $isValidated = $result['data']['bill']['is_validated'];
+                                        } elseif (isset($result['data']['is_validated'])) {
+                                            $isValidated = $result['data']['is_validated'];
+                                        }
+                                        
+                                        $errorsObj = $result['data']['bill']['errors'] ?? $result['data']['errors'] ?? null;
+                                        $errorsStr = is_array($errorsObj) ? json_encode($errorsObj, JSON_UNESCAPED_UNICODE) : (string)$errorsObj;
+                                        $hasRechazo = stripos($errorsStr, 'rechazo') !== false;
+                                        
+                                        if (!$isValidated && !$hasRechazo) {
+                                            throw new \Exception("DIAN_TIMEOUT|" . $apiResponseStr . "|" . $factusId);
+                                        } elseif (!$isValidated && $hasRechazo) {
+                                            throw new \Exception("RECHAZO_DIAN|" . $errorsStr);
+                                        }
+                                    } else {
+                                        throw new \Exception($apiResponseStr);
+                                    }
+                                    
+                                    $stmtUpdate = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'ENVIADO', factus_invoice_id = ?, api_response = ? WHERE id = ?");
+                                    $stmtUpdate->execute([$factusId, $apiResponseStr, $id]);
+                                    echo "✅ Factura $idFacturaSR creada y enviada con éxito tras resolver conflicto 409.\n";
+                                    continue;
+                                }
+                            }
+                        }
+                    } catch (\Exception $exCheck) {
+                        echo "⚠️ Error al intentar resolver conflicto 409 (eliminar/recrear): " . $exCheck->getMessage() . "\n";
+                        $responseBody = $exCheck->getMessage();
+                    }
+                }
+
                 echo "❌ Error de validación en factura $idFacturaSR: " . $responseBody . "\n";
                 
                 $stmtError = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'ERROR', ultimo_error = ?, api_response = ?, intentos = intentos + 1 WHERE id = ?");
@@ -228,10 +363,18 @@ class Processor
             } catch (\Exception $e) {
                 $msg = $e->getMessage();
                 if (str_starts_with($msg, 'DIAN_TIMEOUT|')) {
-                    $apiResponseStr = substr($msg, 13);
+                    $parts = explode('|', $msg, 3);
+                    $apiResponseStr = $parts[1] ?? '';
+                    $recoveredFactusId = $parts[2] ?? null;
+
                     echo "⏳ Demora en la DIAN detectada para factura $idFacturaSR. Queda EN_COLA para reintento automático.\n";
-                    $stmtError = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'EN_COLA', ultimo_error = 'DIAN_TIMEOUT: Demora en validación DIAN. Reintentando...', api_response = ?, intentos = intentos + 1 WHERE id = ?");
-                    $stmtError->execute([$apiResponseStr, $id]);
+                    if ($recoveredFactusId) {
+                        $stmtError = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'EN_COLA', ultimo_error = 'DIAN_TIMEOUT: Demora en validación DIAN. Reintentando consulta...', api_response = ?, factus_invoice_id = ?, intentos = intentos + 1 WHERE id = ?");
+                        $stmtError->execute([$apiResponseStr, $recoveredFactusId, $id]);
+                    } else {
+                        $stmtError = $mysql->prepare("UPDATE integracion_facturacion SET estado = 'EN_COLA', ultimo_error = 'DIAN_TIMEOUT: Demora en validación DIAN. Reintentando...', api_response = ?, intentos = intentos + 1 WHERE id = ?");
+                        $stmtError->execute([$apiResponseStr, $id]);
+                    }
                 } elseif (str_starts_with($msg, 'RECHAZO_DIAN|')) {
                     $errorDetails = substr($msg, 13);
                     echo "❌ Rechazo explícito de DIAN en factura $idFacturaSR: " . $errorDetails . "\n";
