@@ -101,6 +101,16 @@ Configura tus credenciales:
 
 ---
 
+## ☕ Apoya el Proyecto (Donaciones)
+
+Si este software te ha sido de utilidad en tu restaurante o consultoría y deseas apoyar su desarrollo continuo, mantenimiento o la creación de nuevas funciones, ¡puedes invitarnos a un café! ☕
+
+Aceptamos donaciones voluntarias a través de **PayPal**:
+*   👉 **Donación vía PayPal:** [paypal.me/maurogarcesd](https://paypal.me/maurogarcesd)
+*   📩 **Cuenta de Correo:** `maurogarcesd@gmail.com`
+
+---
+
 ## 🧑‍💻 Integración como Servicio de Consultoría
 ### *¿Necesitas implementar esta solución en tu restaurante o el de tus clientes?*
 
