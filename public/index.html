@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Factus V2 - DataInvoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color), #000000);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-weight: 800;
+            margin: 0;
+            background: -webkit-linear-gradient(#60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow-x: auto;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.ENVIADO {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .badge.ERROR {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .badge.PENDIENTE,
+        .badge.EN_COLA {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .badge.OMITIDA {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            color: #a5b4fc;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1 id="page-title">Facturación Automática</h1>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Monitor de ventas y cola de envíos DIAN
+                    Bendita Comida· <span id="provider-badge"
+                        style="font-weight:700; color: var(--accent);">Cargando...</span></p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <!-- Selector de Proveedor -->
+                <div id="provider-switcher"
+                    style="display:flex; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 0.85rem;">
+                    <button id="btn-prov-factus" onclick="switchProvider('factus')"
+                        style="padding: 0.45rem 1rem; border: none; cursor: pointer; font-weight: 600; font-family:'Inter',sans-serif; transition: all 0.2s; color: #94a3b8; background: transparent;">
+                        🟢 Factus
+                    </button>
+                    <button id="btn-prov-datainvoice" onclick="switchProvider('datainvoice')"
+                        style="padding: 0.45rem 1rem; border: none; cursor: pointer; font-weight: 600; font-family:'Inter',sans-serif; transition: all 0.2s; color: #94a3b8; background: transparent;">
+                        ⚡ DataInvoice
+                    </button>
+                </div>
+                <button class="btn" style="background:var(--panel-bg); border:1px solid var(--border);"
+                    onclick="openSettings()" id="btn-settings">⚙️ Configuración</button>
+                <button class="btn" style="background:var(--panel-bg); border:1px solid var(--border);"
+                    onclick="openRanges()" id="btn-ranges">🔢 Rangos</button>
+                <span id="queue-status-text" style="font-weight: 600;">Estado: Cargando...</span>
+                <button id="btn-toggle-queue" class="btn" onclick="toggleQueue()">Cargando...</button>
+                <button class="btn"
+                    style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b; font-size:0.8rem;"
+                    onclick="resetPayloads()" title="Regenera todos los payloads pendientes con el proveedor activo">
+                    🔄 Regenerar Payloads
+                </button>
+                <button class="btn"
+                    style="background:rgba(16,185,129,0.15); border:1px solid #10b981; color:#10b981; font-size:0.8rem;"
+                    onclick="processOmitidas()" title="Envía a la DIAN todas las facturas omitidas que ya tengan datos de cliente">
+                    🚀 Enviar Omitidas con Datos
+                </button>
+            </div>
+        </header>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <div class="glass-panel" style="flex: 1; text-align: center;">
+                <h3
+                    style="margin: 0; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                    Facturas Enviadas (Mes)</h3>
+                <p id="stat-count"
+                    style="font-size: 2rem; font-weight: 800; margin: 0.5rem 0 0 0; color: var(--success);">0</p>
+            </div>
+            <div class="glass-panel" style="flex: 1; text-align: center;">
+                <h3
+                    style="margin: 0; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                    Total Facturado (Mes)</h3>
+                <p id="stat-total"
+                    style="font-size: 2rem; font-weight: 800; margin: 0.5rem 0 0 0; color: var(--accent);">$0</p>
+            </div>
+        </div>
+
+        <!-- Alerta de Contingencia (Oculta por defecto) -->
+        <div id="contingency-alert" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; color: var(--danger); align-items: center; justify-content: space-between;">
+            <div>
+                <strong style="font-size: 1.1rem; display: block; margin-bottom: 0.3rem;">⚠️ Alerta de Contingencia: Represamiento Detectado</strong>
+                El sistema ha detectado una alta cantidad de facturas en cola o con error. Si esto persiste, comuníquese con soporte.
+            </div>
+            <a href="https://wa.me/573206556477" target="_blank" class="btn" style="background: #25D366; border: 1px solid #25D366; text-decoration: none; color: white; white-space: nowrap;">
+                📱 WhatsApp: 320 655 6477
+            </a>
+        </div>
+
+        <div class="glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio / Ticket</th>
+                        <th>Número DIAN</th>
+                        <th>Fecha</th>
+                        <th>Total COP</th>
+                        <th>Estado</th>
+                        <th>Intentos</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Cargando ventas...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Edit -->
+    <div class="modal-overlay" id="modal-edit">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2>Editar Cliente (Pre-envío)</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Corrige el NIT o Nombre para superar validaciones.
+                (El cambio aplicará solo al JSON a enviar, no a la base de SoftRestaurant).</p>
+
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+                <label>Tipo de Documento</label>
+                <select id="edit-tipo-doc"
+                    style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 1rem;">
+                    <option value="3">Cédula de Ciudadanía</option>
+                    <option value="6">NIT</option>
+                    <option value="4">Cédula de Extranjería</option>
+                    <option value="5">Pasaporte</option>
+                    <option value="2">Tarjeta de Identidad</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>NIT / Cédula</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="edit-nit" style="flex: 1;">
+                    <button class="btn btn-warning" onclick="buscarEnDian()">🔍 Buscar en DIAN</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nombre(s) / Razón Social</label>
+                <input type="text" id="edit-nombre">
+            </div>
+            <div class="form-group">
+                <label>Correo Electrónico (Opcional)</label>
+                <input type="email" id="edit-email">
+            </div>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn" style="background: transparent; border: 1px solid var(--border);"
+                    onclick="closeModals()">Cancelar</button>
+                <button class="btn btn-success" onclick="saveAndSend()">Guardar en Cola</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal View -->
+    <div class="modal-overlay" id="modal-view">
+        <div class="modal" style="max-width: 800px;">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2>Detalles Técnicos</h2>
+            <h3 style="color:var(--text-muted); margin-bottom:0.5rem;">Payload JSON (Enviado a la API)</h3>
+            <pre id="view-payload"></pre>
+            <h3 style="color:var(--text-muted); margin-bottom:0.5rem; margin-top:1.5rem;">Respuesta API / Errores</h3>
+            <pre id="view-response"></pre>
+        </div>
+    </div>
+
+    <!-- Modal Settings -->
+    <div class="modal-overlay" id="modal-settings">
+        <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2 style="display: flex; align-items: center; gap: 0.5rem;">⚙️ Configuración Global</h2>
+
+            <!-- Sección: Numeración y DIAN -->
+            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                <h3 style="margin-top:0; color: #a78bfa;">📑 Numeración y DIAN</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>NIT Emisor</label>
+                        <input type="text" id="set-nit">
+                    </div>
+                    <div class="form-group">
+                        <label>Prefijo</label>
+                        <input type="text" id="set-prefix">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Número de Resolución</label>
+                    <input type="text" id="set-resolution">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Desde Número</label>
+                        <input type="number" id="set-from">
+                    </div>
+                    <div class="form-group">
+                        <label>Hasta Número</label>
+                        <input type="number" id="set-to">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Valor UVT (Actual)</label>
+                        <input type="number" id="set-uvt">
+                    </div>
+                    <div class="form-group">
+                        <label>ID Unidad Medida</label>
+                        <input type="number" id="set-unit">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Patrón de Emisión (Throttling) -->
+            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem; border-color: #f59e0b;">
+                <h3 style="margin-top:0; color: #f59e0b;">⚖️ Patrón de Emisión (Throttling)</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                    Decide qué proporción de facturas se envían automáticamente a la DIAN.
+                </p>
+                <select id="set-pattern" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    <option value="ALL">1 de 1 (Enviar todas - Recomendado)</option>
+                    <option value="1_OF_2">1 de 2 (Intercalado - Una sí, una no)</option>
+                    <option value="1_OF_3">1 de 3 (Una sí, dos no)</option>
+                    <option value="RANDOM_50">Aleatorio (Enviar el 50% al azar)</option>
+                </select>
+            </div>
+
+            <!-- Sección: Otros -->
+            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                <h3 style="margin-top:0; color: #10b981;">📧 Notificaciones y Otros</h3>
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="checkbox" id="set-mail" style="width: auto;">
+                    <label style="margin:0;">Enviar correo al cliente automáticamente</label>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="checkbox" id="set-mail-me" style="width: auto;">
+                    <label style="margin:0;">Enviarme una copia de cada factura</label>
+                </div>
+                <div class="form-group">
+                    <label>Retraso de la Cola (Minutos)</label>
+                    <input type="number" id="setting-delay" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Límite de Edición (Horas)</label>
+                    <input type="number" id="set-edit-limit" value="24" min="1">
+                    <small style="color:var(--text-muted); font-size:0.75rem;">Tiempo máximo permitido para identificar un cliente.</small>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn" style="background: transparent; border: 1px solid var(--border);" onclick="closeModals()">Cancelar</button>
+                <button class="btn btn-success" onclick="saveAllSettings()">💾 Guardar Todo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ranges -->
+    <div class="modal-overlay" id="modal-ranges">
+        <div class="modal" style="max-width: 800px;">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2>Rangos de Numeración (Resoluciones DIAN)</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Estos son los rangos sincronizados con Factus.</p>
+
+            <div id="ranges-container">
+                <p>Cargando rangos...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalData = [];
+        let currentProvider = 'factus'; // Se detecta al cargar
+
+        function highlightProviderButton(provider) {
+            const factusBtn = document.getElementById('btn-prov-factus');
+            const diBtn = document.getElementById('btn-prov-datainvoice');
+            const rangesBtn = document.getElementById('btn-ranges');
+
+            // Reset both
+            factusBtn.style.background = 'transparent';
+            factusBtn.style.color = '#94a3b8';
+            diBtn.style.background = 'transparent';
+            diBtn.style.color = '#94a3b8';
+
+            if (provider === 'datainvoice') {
+                diBtn.style.background = 'rgba(167,139,250,0.2)';
+                diBtn.style.color = '#a78bfa';
+                rangesBtn.style.display = 'none';
+            } else {
+                factusBtn.style.background = 'rgba(16,185,129,0.2)';
+                factusBtn.style.color = '#10b981';
+                rangesBtn.style.display = '';
+            }
+        }
+
+        async function detectProvider() {
+            try {
+                const res = await fetch('/api.php?action=status');
+                const data = await res.json();
+                currentProvider = data.billing_provider ?? 'factus';
+            } catch (e) { /* asumir factus */ }
+
+            const badge = document.getElementById('provider-badge');
+
+            if (currentProvider === 'datainvoice') {
+                badge.textContent = '⚡ DataInvoice';
+                badge.style.color = '#a78bfa';
+                document.getElementById('page-title').textContent = 'Facturación Automática DataInvoice';
+                document.title = 'Dashboard DataInvoice';
+            } else {
+                badge.textContent = '🟢 Factus';
+                badge.style.color = 'var(--success)';
+                document.getElementById('page-title').textContent = 'Facturación Automática Factus';
+                document.title = 'Dashboard Factus V2';
+            }
+
+            highlightProviderButton(currentProvider);
+        }
+
+        async function switchProvider(provider) {
+            if (provider === currentProvider) return;
+
+            const label = provider === 'datainvoice' ? 'DataInvoice' : 'Factus';
+            const icon = provider === 'datainvoice' ? '⚡' : '🟢';
+
+            const result = await Swal.fire({
+                icon: 'question',
+                title: `Cambiar a ${label}`,
+                html: `¿Deseas usar <strong>${icon} ${label}</strong> como proveedor activo?<br><small style="color:#94a3b8;">El cambio aplica en el próximo ciclo del procesador.</small>`,
+                showCancelButton: true,
+                confirmButtonText: `Cambiar a ${label}`,
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: provider === 'datainvoice' ? '#7c3aed' : '#10b981',
+                cancelButtonColor: '#475569',
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await fetch('/api.php?action=set_provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    currentProvider = provider;
+                    detectProvider();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Proveedor cambiado',
+                        html: `Ahora usando <strong>${icon} ${label}</strong>.`,
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: provider === 'datainvoice' ? '#7c3aed' : '#10b981',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el proveedor.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#ef4444' });
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo conectar con el servidor.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#ef4444' });
+            }
+        }
+
+        async function loadData() {
+            const [listRes, statusRes, statsRes] = await Promise.all([
+                fetch('/api.php?action=list'),
+                fetch('/api.php?action=status'),
+                fetch('/api.php?action=stats')
+            ]);
+
+            const listJson = await listRes.json();
+            const statusJson = await statusRes.json();
+            const statsJson = await statsRes.json();
+
+            globalData = listJson.data;
+            renderTable(globalData, statusJson);
+            renderStatus(statusJson.status);
+
+            if (statsJson.status === 'success') {
+                document.getElementById('stat-count').innerText = statsJson.data.facturas_mes;
+                document.getElementById('stat-total').innerText = '$' + Number(statsJson.data.total_mes).toLocaleString();
+            }
+
+            if (statusJson.delay_minutes !== undefined) {
+                document.getElementById('setting-delay').value = statusJson.delay_minutes;
+            }
+        }
+
+        function renderStatus(status) {
+            const btn = document.getElementById('btn-toggle-queue');
+            const txt = document.getElementById('queue-status-text');
+
+            if (status === 'PLAYING') {
+                txt.innerHTML = `Estado: <span style="color:var(--success)">▶ PROCESANDO COLA</span>`;
+                btn.className = 'btn btn-warning';
+                btn.innerText = 'Pausar Cola';
+            } else {
+                txt.innerHTML = `Estado: <span style="color:var(--warning)">⏸ COLA PAUSADA</span>`;
+                btn.className = 'btn btn-success';
+                btn.innerText = 'Reanudar Cola';
+            }
+            btn.dataset.current = status;
+        }
+
+        function renderTable(data, statusData = {}) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            // Lógica de Contingencia
+            const contingencyAlert = document.getElementById('contingency-alert');
+            const alertThreshold = parseInt(statusData.alert_threshold || 5);
+            const delayMinutes = parseInt(statusData.delay_minutes || 0);
+            let backlogCount = 0;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No hay facturas registradas.</td></tr>`;
+                if(contingencyAlert) contingencyAlert.style.display = 'none';
+                return;
+            }
+
+            data.forEach(row => {
+                const isError = row.estado === 'ERROR';
+                const isPending = row.estado === 'PENDIENTE' || row.estado === 'EN_COLA';
+                const isOmitida = row.estado === 'OMITIDA';
+
+                // Lógica inteligente de represamiento:
+                // Sumamos si es ERROR. Si es PENDIENTE/EN_COLA, solo sumamos si ya pasó su tiempo de retraso intencional.
+                if (isError) {
+                    backlogCount++;
+                } else if (isPending) {
+                    const fechaSr = new Date(row.fecha_sr);
+                    const ahora = new Date();
+                    const diffMinutos = Math.floor((ahora - fechaSr) / 60000);
+                    // Damos un margen de gracia de 2 minutos sobre el delay configurado
+                    if (diffMinutos > delayMinutes + 2) {
+                        backlogCount++;
+                    }
+                }
+
+                // Lógica de límite de edición
+                const fechaSr = new Date(row.fecha_sr);
+                const ahora = new Date();
+                const diffHoras = Math.abs(ahora - fechaSr) / 36e5;
+                const maxEditHours = parseInt(document.getElementById('set-edit-limit')?.value || '24');
+                const canEdit = diffHoras <= maxEditHours;
+
+                let actions = '';
+
+                if ((isError || isPending || isOmitida) && canEdit) {
+                    const editLabel = isOmitida ? '🆔 Identificar Cliente' : '✏️ Editar Cliente';
+                    const editStyle = isOmitida ? 'background:#818cf8; color:white;' : '';
+                    actions += `<button class="btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-right:5px; ${editStyle}" onclick="openEdit(${row.id})">${editLabel}</button>`;
+                    actions += `<button class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-right:5px;" onclick="sendManual(${row.id})">🚀 Forzar Envío</button>`;
+                } else if (!canEdit && row.estado !== 'ENVIADO') {
+                    actions += `<span style="color:var(--danger); font-size:0.7rem;">⏳ Tiempo expirado</span> `;
+                }
+
+                if (row.estado === 'ENVIADO') {
+                    actions += `<a class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-right:5px; text-decoration:none; display:inline-block; background-color:#3b82f6;" href="/api.php?action=download_pdf&id=${row.id}" target="_blank">📥 Descargar PDF</a>`;
+                }
+
+                actions += `<button class="btn" style="background:var(--panel-bg); border:1px solid var(--border); padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="openView(${row.id})">📄 Ver JSON</button>`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td><strong>${row.id_factura_sr}</strong></td>
+                <td style="color:var(--text-muted); font-size:0.85rem;">${row.factus_invoice_id || '—'}</td>
+                <td>${row.fecha_sr}</td>
+                <td>$${Number(row.total_sr).toLocaleString()}</td>
+                <td>
+                    <span class="badge ${row.estado}">${row.estado}</span>
+                    ${row.ultimo_error ? `<br><small style="color:var(--danger); font-size:0.75rem; display:block; max-width:200px; white-space:normal; margin-top:5px;">${row.ultimo_error}</small>` : ''}
+                </td>
+                <td>${row.intentos}</td>
+                <td>${actions}</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            // Mostrar u ocultar la alerta de contingencia dinámicamente
+            if (contingencyAlert) {
+                if (backlogCount >= alertThreshold) {
+                    contingencyAlert.style.display = 'flex';
+                } else {
+                    contingencyAlert.style.display = 'none';
+                }
+            }
+        }
+
+        async function toggleQueue() {
+            const btn = document.getElementById('btn-toggle-queue');
+            const current = btn.dataset.current;
+            const newStatus = current === 'PLAYING' ? 'PAUSED' : 'PLAYING';
+
+            await fetch('/api.php?action=toggle', {
+                method: 'POST',
+                body: JSON.stringify({ status: newStatus })
+            });
+            loadData();
+        }
+
+        async function processOmitidas() {
+            try {
+                const res = await fetch('/api.php?action=process_omitidas');
+                const json = await res.json();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Proceso completado',
+                    text: json.message,
+                    background: '#1e293b',
+                    color: '#f8fafc',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                loadData();
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo procesar las facturas omitidas.', background: '#1e293b', color: '#f8fafc' });
+            }
+        }
+
+        async function resetPayloads() {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: '¿Regenerar Payloads?',
+                html: `Esta acción resetea todos los registros <strong>no enviados</strong> a <code>EN_COLA</code> y borra su JSON guardado.<br><br>
+                       El Watcher los regenerará automáticamente con el proveedor activo (<strong>${currentProvider === 'datainvoice' ? '⚡ DataInvoice' : '🟢 Factus'}</strong>).<br><br>
+                       <small style="color:#f59e0b;">Úsalo cuando cambies de proveedor y tengas registros en formato incorrecto.</small>`,
+                showCancelButton: true,
+                confirmButtonText: '🔄 Sí, regenerar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#475569',
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+
+            if (!result.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Reseteando registros...',
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: '#f8fafc',
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await fetch('/api.php?action=reset_payloads', { method: 'POST' });
+                const data = await res.json();
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Listo!',
+                    text: data.message,
+                    background: '#1e293b',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981',
+                    timer: 4000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+                loadData();
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo resetear los registros.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#ef4444' });
+            }
+        }
+
+        function openEdit(id) {
+            const row = globalData.find(r => r.id == id);
+            if (!row || !row.json_payload) {
+                Swal.fire({ icon: 'error', title: 'Sin datos', text: 'JSON no disponible para edición.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#3b82f6' });
+                return;
+            }
+
+            const payload = JSON.parse(row.json_payload);
+            document.getElementById('edit-id').value = id;
+
+            // Soportar ambos esquemas: Factus usa 'identification'+'names', DataInvoice usa 'identification_number'+'name'
+            const nit = payload.customer.identification_number ?? payload.customer.identification ?? '';
+            const nombre = payload.customer.name ?? payload.customer.names ?? '';
+            document.getElementById('edit-nit').value = nit;
+            document.getElementById('edit-nombre').value = nombre;
+            document.getElementById('edit-email').value = payload.customer.email || '';
+
+            // Match document type (Factus: identification_document_id, DataInvoice: type_document_identification_id)
+            const docId = payload.customer.type_document_identification_id ?? payload.customer.identification_document_id ?? '3';
+            document.getElementById('edit-tipo-doc').value = docId;
+
+            document.getElementById('modal-edit').style.display = 'flex';
+        }
+
+        async function buscarEnDian() {
+            const type = document.getElementById('edit-tipo-doc').value;
+            const number = document.getElementById('edit-nit').value.trim();
+
+            if (!number) {
+                Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Digita el NIT / Cédula primero.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#3b82f6' });
+                return;
+            }
+
+            const btn = document.querySelector('button[onclick="buscarEnDian()"]');
+            btn.innerText = 'Buscando...';
+            btn.disabled = true;
+
+            Swal.fire({
+                title: 'Consultando DIAN...',
+                text: 'Buscando información del documento',
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: '#f8fafc',
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // Ahora usamos search_customer que busca Local + Factus
+                const res = await fetch(`/api.php?action=search_customer&number=${number}`);
+                const json = await res.json();
+
+                if (json.status === 'success') {
+                    const found = json.data;
+                    document.getElementById('edit-nombre').value = found.names ?? found.name ?? '';
+                    document.getElementById('edit-email').value = found.email || '';
+                    document.getElementById('edit-tipo-doc').value = found.identification_document_id ?? found.type_document_identification_id ?? '3';
+
+                    const sourceText = json.source === 'local' ? 'Base de Datos Local' : 'API Factus';
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Encontrado!',
+                        text: `Datos cargados desde ${sourceText} correctamente.`,
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Sin resultados',
+                        text: 'No se encontraron datos locales ni en Factus para este documento.',
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo consultar la DIAN.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#ef4444' });
+            } finally {
+                btn.innerText = '🔍 Buscar en DIAN';
+                btn.disabled = false;
+            }
+        }
+
+        function openView(id) {
+            const row = globalData.find(r => r.id == id);
+
+            let prettyPayload = 'No disponible';
+            try { prettyPayload = JSON.stringify(JSON.parse(row.json_payload), null, 4); } catch (e) { }
+
+            let prettyResponse = row.api_response || row.ultimo_error || 'Aún no hay respuesta.';
+            try { prettyResponse = JSON.stringify(JSON.parse(row.api_response), null, 4); } catch (e) { }
+
+            document.getElementById('view-payload').innerText = prettyPayload;
+            document.getElementById('view-response').innerText = prettyResponse;
+
+            document.getElementById('modal-view').style.display = 'flex';
+        }
+
+        function closeModals() {
+            document.getElementById('modal-edit').style.display = 'none';
+            document.getElementById('modal-view').style.display = 'none';
+            document.getElementById('modal-settings').style.display = 'none';
+            document.getElementById('modal-ranges').style.display = 'none';
+        }
+
+        let currentCompanyData = null;
+
+        async function openSettings() {
+            document.getElementById('modal-settings').style.display = 'flex';
+            try {
+                const res = await fetch('/api.php?action=get_all_settings');
+                const json = await res.json();
+                if (json.status === 'success') {
+                    const s = json.data;
+                    document.getElementById('set-nit').value = s.DATAINVOICE_NIT || '';
+                    document.getElementById('set-prefix').value = s.DATAINVOICE_PREFIX || '';
+                    document.getElementById('set-resolution').value = s.DATAINVOICE_RESOLUTION_NUMBER || '';
+                    document.getElementById('set-from').value = s.DATAINVOICE_NUMBER_FROM || '';
+                    document.getElementById('set-to').value = s.DATAINVOICE_NUMBER_TO || '';
+                    document.getElementById('set-uvt').value = s.VALOR_UVT || '';
+                    document.getElementById('set-unit').value = s.DATAINVOICE_UNIT_MEASURE_ID || '';
+                    document.getElementById('set-pattern').value = s.EMISSION_PATTERN || '';
+                    document.getElementById('set-mail').checked = s.DATAINVOICE_SEND_MAIL === 'true';
+                    document.getElementById('set-mail-me').checked = s.DATAINVOICE_SEND_MAIL_TO_ME === 'true';
+                    document.getElementById('set-edit-limit').value = s.MAX_EDIT_HOURS || '';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveAllSettings() {
+            const data = {
+                DATAINVOICE_NIT: document.getElementById('set-nit').value,
+                DATAINVOICE_PREFIX: document.getElementById('set-prefix').value,
+                DATAINVOICE_RESOLUTION_NUMBER: document.getElementById('set-resolution').value,
+                DATAINVOICE_NUMBER_FROM: document.getElementById('set-from').value,
+                DATAINVOICE_NUMBER_TO: document.getElementById('set-to').value,
+                VALOR_UVT: document.getElementById('set-uvt').value,
+                DATAINVOICE_UNIT_MEASURE_ID: document.getElementById('set-unit').value,
+                EMISSION_PATTERN: document.getElementById('set-pattern').value,
+                DATAINVOICE_SEND_MAIL: document.getElementById('set-mail').checked ? 'true' : 'false',
+                DATAINVOICE_SEND_MAIL_TO_ME: document.getElementById('set-mail-me').checked ? 'true' : 'false',
+                MAX_EDIT_HOURS: document.getElementById('set-edit-limit').value
+            };
+            const delay = document.getElementById('setting-delay').value;
+            try {
+                await fetch('/api.php?action=save_all_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                await fetch('/api.php?action=update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ delay_minutes: delay })
+                });
+                Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Cambios aplicados.', background: '#1e293b', color: '#f8fafc', timer: 2000, showConfirmButton: false });
+                closeModals();
+                loadData();
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar.', background: '#1e293b', color: '#f8fafc' });
+            }
+        }
+
+        async function saveCompany() {
+            if (!currentCompanyData) return;
+
+            // Update local object
+            const newName = document.getElementById('emisor-name').value;
+            if (currentCompanyData.legal_organization && currentCompanyData.legal_organization.code === '1') {
+                currentCompanyData.company = newName;
+            } else {
+                currentCompanyData.names = newName;
+            }
+
+            currentCompanyData.email = document.getElementById('emisor-email').value;
+            currentCompanyData.phone = document.getElementById('emisor-phone').value;
+            currentCompanyData.address = document.getElementById('emisor-address').value;
+
+            // Build PUT payload
+            const payload = {
+                legal_organization_code: currentCompanyData.legal_organization ? currentCompanyData.legal_organization.code : "2",
+                company: currentCompanyData.company,
+                names: currentCompanyData.names,
+                surnames: currentCompanyData.surnames,
+                responsibilities: currentCompanyData.responsibilities ? currentCompanyData.responsibilities.map(r => r.code).join(',') : "5",
+                economic_activity: currentCompanyData.economic_activity,
+                email: currentCompanyData.email,
+                address: currentCompanyData.address,
+                trade_name: currentCompanyData.trade_name,
+                registration_code: currentCompanyData.registration_code,
+                phone: currentCompanyData.phone,
+                municipality_code: currentCompanyData.municipality ? currentCompanyData.municipality.code : "11001",
+                tribute_code: currentCompanyData.tribute ? currentCompanyData.tribute.code : "ZZ"
+            };
+
+            try {
+                const res = await fetch('/api.php?action=update_company', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'error') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al guardar',
+                        html: `<pre style="text-align:left;font-size:0.75rem;">${JSON.stringify(data, null, 2)}</pre>`,
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#ef4444'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Guardado!',
+                        text: 'Datos de empresa actualizados correctamente.',
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo guardar en el servidor.', background: '#1e293b', color: '#f8fafc', confirmButtonColor: '#ef4444' });
+            }
+        }
+
+        async function openRanges() {
+            document.getElementById('modal-ranges').style.display = 'flex';
+            const container = document.getElementById('ranges-container');
+            container.innerHTML = '<p>Cargando rangos desde DIAN/Factus...</p>';
+            try {
+                const res = await fetch('/api.php?action=numbering_ranges');
+                const data = await res.json();
+                if (data.data) {
+                    let html = '<table><thead><tr><th>Prefijo</th><th>Resolución</th><th>Desde</th><th>Hasta</th><th>Vence</th></tr></thead><tbody>';
+                    data.data.forEach(r => {
+                        html += `<tr>
+                        <td>${r.prefix || ''}</td>
+                        <td>${r.resolution_number || ''}</td>
+                        <td>${r.from || ''}</td>
+                        <td>${r.to || ''}</td>
+                        <td>${r.end_date || ''}</td>
+                    </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>No se encontraron rangos o hubo un error.</p>';
+                }
+            } catch (e) {
+                container.innerHTML = '<p>Error de conexión al obtener rangos.</p>';
+            }
+        }
+
+        async function saveAndSend() {
+            const id = document.getElementById('edit-id').value;
+            const nit = document.getElementById('edit-nit').value;
+            const nombre = document.getElementById('edit-nombre').value;
+            const email = document.getElementById('edit-email').value;
+            const tipoDoc = document.getElementById('edit-tipo-doc').value;
+
+            const row = globalData.find(r => r.id == id);
+            let payload = JSON.parse(row.json_payload);
+
+            const ahora = new Date();
+            const fechaStr = ahora.toISOString().split('T')[0];
+            const horaStr = ahora.toTimeString().split(' ')[0];
+            payload.date = fechaStr;
+            payload.time = horaStr;
+
+            // Detectar esquema: DataInvoice usa identification_number+name, Factus usa identification+names
+            if ('identification_number' in payload.customer) {
+                // DataInvoice schema
+                payload.customer.identification_number = nit;
+                payload.customer.name = nombre;
+                payload.customer.type_document_identification_id = parseInt(tipoDoc);
+                payload.customer.type_organization_id = (tipoDoc == '6') ? 1 : 2;
+                if (email) payload.customer.email = email;
+            } else {
+                // Factus schema
+                payload.customer.identification = nit;
+                payload.customer.names = nombre;
+                payload.customer.identification_document_id = parseInt(tipoDoc);
+                if (email) payload.customer.email = email;
+                if (tipoDoc == '6') {
+                    payload.customer.company = nombre;
+                } else {
+                    payload.customer.company = '';
+                }
+            }
+
+            await fetch('/api.php?action=update', {
+                method: 'POST',
+                body: JSON.stringify({
+                    id: id,
+                    json_payload: JSON.stringify(payload)
+                })
+            });
+
+            closeModals();
+            loadData();
+        }
+
+        async function sendManual(id) {
+            const providerLabel = currentProvider === 'datainvoice' ? 'DataInvoice' : 'Factus';
+            const row = globalData.find(r => r.id == id);
+            const ticket = row ? row.id_factura_sr : `#${id}`;
+
+            const confirm = await Swal.fire({
+                icon: 'question',
+                title: 'Forzar envío',
+                html: `¿Deseas enviar la factura <strong>${ticket}</strong> a <strong>${providerLabel}</strong> ahora mismo?<br><small style="color:#94a3b8;">Esta acción omite la cola automática.</small>`,
+                showCancelButton: true,
+                confirmButtonText: '🚀 Sí, enviar ahora',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#475569',
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Enviando factura...',
+                text: `Conectando con ${providerLabel}`,
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: '#f8fafc',
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await fetch('/api.php?action=send_manual', {
+                    method: 'POST',
+                    body: JSON.stringify({ id: id })
+                });
+
+                const contentType = res.headers.get("content-type");
+                let data;
+
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
+                } else {
+                    const rawText = await res.text();
+                    throw new Error(`Respuesta no-JSON del servidor: ${rawText.substring(0, 500)}`);
+                }
+
+                if (data.status === 'error') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al enviar',
+                        html: `<div style="text-align:left; font-size:0.85rem; background:rgba(0,0,0,0.2); padding:1rem; border-radius:8px; max-height:300px; overflow:auto;">
+                                <strong>Mensaje:</strong><br>${data.message}
+                               </div>`,
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#ef4444',
+                        width: '600px'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Enviada!',
+                        html: `La factura <strong>${ticket}</strong> fue enviada a <strong>${providerLabel}</strong>.`,
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (e) {
+                console.error("Error completo:", e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión / Servidor',
+                    html: `<div style="text-align:left; font-size:0.8rem;">
+                            <p>Ocurrió un problema al procesar la respuesta:</p>
+                            <pre style="background:rgba(239,68,68,0.1); color:#fca5a5; padding:10px; border-radius:5px; white-space:pre-wrap;">${e.message}</pre>
+                           </div>`,
+                    background: '#1e293b',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+            loadData();
+        }
+
+        // Auto-refresh cada 5 segundos si está en playing, pero evitamos parpadeos
+        setInterval(() => {
+            const isEditing = document.getElementById('modal-edit').style.display === 'flex';
+            const isViewing = document.getElementById('modal-view').style.display === 'flex';
+            if (!isEditing && !isViewing) {
+                loadData();
+            }
+        }, 5000);
+
+        // Initial load
+        detectProvider();
+        loadData();
+    </script>
+</body>
+
+</html>

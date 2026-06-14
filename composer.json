@@ -1,0 +1,15 @@
+{
+    "name": "softrestaurant/factus-integration",
+    "description": "Middleware to integrate SoftRestaurant with Factus API",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "guzzlehttp/guzzle": "^7.8",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

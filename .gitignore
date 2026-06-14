@@ -1,0 +1,27 @@
+# Entorno y credenciales
+.env
+
+# Dependencias de composer
+/vendor/
+
+# Estado dinámico de la aplicación
+/storage/app_state.json
+
+# Logs y temporales de PHP
+*.log
+/storage/*.log
+
+# Configuraciones de editores/IDE
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Temporales del sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
