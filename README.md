@@ -1,37 +1,43 @@
-# Middleware de Integración para SoftRestaurant 9.5
-### Facturación Electrónica en Tiempo Real con Factus (V2) o DataInvoice (UBL 2.1)
+# 🍽️ Soft Restaurant 9.5 — Middleware de Facturación Electrónica DIAN
 
-Este sistema actúa como un servicio en segundo plano (daemon) que conecta la base de datos del punto de venta **SoftRestaurant 9.5** con proveedores tecnológicos autorizados por la DIAN en Colombia, automatizando la emisión de facturas electrónicas y optimizando los procesos en caja.
+[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://www.php.net/)
+[![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+[![DIAN Colombia](https://img.shields.io/badge/DIAN-Colombia-FECC00?labelColor=003087)](https://www.dian.gov.co/)
+[![Factus](https://img.shields.io/badge/Proveedor-Factus-4F46E5)](https://factus.com.co/)
+[![DataInvoice](https://img.shields.io/badge/Proveedor-DataInvoice-10B981)](https://www.datainvoice.co/)
 
----
-
-## Características principales
-
-El middleware supervisa constantemente las ventas realizadas en SoftRestaurant, procesa la información y la envía de forma automática a la DIAN a través de la API del proveedor configurado (**Factus** o **DataInvoice**), sin interrumpir el flujo operativo de los cajeros.
-
-*   **Multi-Proveedor en Caliente:** Permite alternar la emisión de facturación electrónica entre **Factus (V2)** y **DataInvoice** mediante cambios en el archivo `.env` o desde el panel de administración.
-*   **Monitoreo en Tiempo Real (Daemon):** Procesa tickets tanto en estado temporal (`tempcheques`) como histórico (`cheques`), garantizando que ninguna venta quede sin reportar.
-*   **Captura Rápida de Identificaciones (Fast-Track POS):** 
-    *   Evita el registro de catálogos de clientes complejos en el punto de venta. El cajero solo debe ingresar el NIT o la Cédula del cliente en el campo de **Referencia** o **Comentarios** del cheque al momento de cobrar.
-    *   El daemon extrae la identificación, realiza búsquedas automáticas y genera el reporte de facturación cumpliendo con las especificaciones de la DIAN.
-*   **Control del Límite de 5 UVT (Consumidor Final):**
-    *   Valida dinámicamente el valor actual del UVT en Colombia.
-    *   Si una venta a "Consumidor Final" (`222222222222`) supera las **5 UVT**, el middleware bloquea automáticamente el envío y lo coloca en estado **ERROR** con un aviso preventivo.
-    *   Permite al administrador asignar los datos del cliente real desde el Dashboard web para liberar y procesar la factura.
-*   **Throttling y Patrones de Emisión:**
-    *   Configura patrones como `1_OF_2` (envía 1 de cada 2 facturas), `1_OF_3` (1 de cada 3) o `RANDOM_50` (50% de probabilidad de envío) exclusivamente para ventas a Consumidor Final. Las facturas con clientes identificados se envían **siempre**.
-*   **Dashboard de Control y Auditoría:**
-    *   Interfaz web intuitiva construida en HTML y JS que permite visualizar la cola de facturas.
-    *   Filtros detallados por estado (PENDIENTE, EN_COLA, ENVIADO, ERROR, OMITIDA).
-    *   Editor en línea para corregir datos del cliente (nombre, email, tipo de documento) de facturas rechazadas o bloqueadas y re-encolarlas de inmediato.
-*   **Base de Datos Local de Clientes (Aprendizaje Continuo):**
-    *   Almacena información de nuevos clientes detectados para auto-completar datos en futuras ventas si se vuelve a usar la misma identificación.
+> **Middleware PHP de integración entre SoftRestaurant 9.5 y la DIAN (Colombia) para facturación electrónica automática y en tiempo real. Compatible con Factus V2 y DataInvoice UBL 2.1.**
 
 ---
 
-## Arquitectura del Sistema
+## ¿Qué es este proyecto?
 
-El proyecto está diseñado bajo una estructura ligera, modular y eficiente en **PHP 8.2+**:
+Este sistema actúa como un **servicio demonio (daemon)** que conecta la base de datos del punto de venta **SoftRestaurant 9.5** con proveedores tecnológicos autorizados por la **DIAN en Colombia**, automatizando la emisión de **facturas electrónicas** sin interrumpir el flujo operativo de los cajeros.
+
+Ideal para:
+- 🏪 Restaurantes colombianos obligados a facturar electrónicamente ante la DIAN
+- 🔌 Integradores que necesitan un puente entre SoftRestaurant y la DIAN
+- 💻 Desarrolladores que buscan automatizar la facturación en puntos de venta
+
+---
+
+## ✨ Características Principales
+
+| Característica | Descripción |
+|---|---|
+| 🔄 **Multi-Proveedor** | Alterna entre **Factus V2** y **DataInvoice** desde el panel o el `.env` |
+| 🤖 **Daemon en Tiempo Real** | Procesa `tempcheques` y `cheques` sin intervención manual |
+| ⚡ **Fast-Track POS** | El cajero ingresa solo el NIT/Cédula en el campo de referencia |
+| 📊 **Control 5 UVT** | Valida límites de Consumidor Final automáticamente |
+| 🎛️ **Throttling** | Patrones `1_OF_2`, `1_OF_3`, `RANDOM_50` para Consumidor Final |
+| 🖥️ **Dashboard Web** | Panel de control con filtros, editor de facturas y gestión de cola |
+| 📚 **BD Clientes Local** | Aprende y autocompleta datos de clientes frecuentes |
+| 🔁 **Manejo de Errores 409** | Detecta conflictos con la DIAN, elimina y recrea la factura automáticamente |
+
+---
+
+## 🏗️ Arquitectura del Sistema
 
 ```mermaid
 graph TD
@@ -47,78 +53,139 @@ graph TD
 
 ---
 
-## Requisitos del Sistema
+## 🖥️ Capturas de Pantalla
 
-*   **PHP:** Versión 8.2 o superior.
-*   **Extensiones de PHP requeridas:**
-    *   `pdo`, `pdo_mysql` (Para la base de datos de control local).
-    *   `sqlsrv`, `pdo_sqlsrv` (Para conectar con SQL Server de SoftRestaurant).
-    *   `curl`, `openssl` (Para comunicación con las APIs externas).
-*   **Bases de Datos:**
-    *   Microsoft SQL Server (Base de datos original de SoftRestaurant).
-    *   MySQL / MariaDB (Base de datos del middleware para control de cola).
+> Panel de control web con monitoreo en tiempo real, filtros por estado y gestión de facturas.
 
 ---
 
-## Guías de Instalación y Despliegue
+## ⚙️ Requisitos del Sistema
 
-El middleware admite dos tipos de despliegue principales:
-
-### Opción A: Despliegue Nativo en Servidor Windows con XAMPP (Recomendado)
-Esta opción es ideal para servidores de restaurantes físicos que operan sobre Windows. 
-1. Instale los controladores PHP oficiales para SQL Server en la carpeta `ext` de su instalación de XAMPP.
-2. Copie este repositorio en la carpeta `htdocs/`.
-3. Configure el archivo `.env`.
-4. Ejecute el demonio en segundo plano configurando el script `src/Daemon.php` en el **Programador de Tareas de Windows** como servicio oculto.
-
-> Para más detalles, consulte la [Guía de Despliegue en XAMPP](file:///d:/Dev/proyectos/SoftRestaurant/xampp_deployment.md).
-
-### Opción B: Despliegue con Docker
-Para entornos de desarrollo o servidores virtualizados, dispone de una configuración con Docker Compose.
-1. Ejecute el contenedor con:
-   ```bash
-   docker-compose up -d
-   ```
-2. El contenedor levantará el servidor web interno en el puerto `8000` y mantendrá ejecutando el proceso `Daemon.php` en segundo plano.
+- **PHP:** 8.2 o superior
+- **Extensiones PHP:** `pdo`, `pdo_mysql`, `sqlsrv`, `pdo_sqlsrv`, `curl`, `openssl`
+- **Bases de Datos:**
+  - Microsoft SQL Server (base de datos de SoftRestaurant)
+  - MySQL / MariaDB (base de control del middleware)
+- **Sistema Operativo:** Windows Server / Linux (Docker)
 
 ---
 
-## Configuración Inicial (`.env`)
+## 🚀 Instalación y Despliegue
 
-Cree su archivo `.env` en la raíz del proyecto copiando el archivo de ejemplo:
+### Opción A: Windows con XAMPP (Recomendado para restaurantes)
+
+1. Instale los drivers PHP para SQL Server en la carpeta `ext` de XAMPP
+2. Clone este repositorio en `htdocs/`
+3. Configure el archivo `.env` con sus credenciales
+4. Programe `src/Daemon.php` en el **Programador de Tareas de Windows**
+
+> Ver la [Guía completa de despliegue en XAMPP](xampp_deployment.md)
+
+### Opción B: Docker (Desarrollo / Servidores Virtualizados)
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/maurogarcesd/softrestaurant-facturacion-electronica.git
+cd softrestaurant-facturacion-electronica
+
+# Configurar variables de entorno
+cp .env.example .env
+# Edite .env con sus credenciales
+
+# Levantar el contenedor
+docker-compose up -d
+```
+
+El contenedor expondrá el dashboard en `http://localhost:8000`
+
+---
+
+## 🔧 Configuración (`.env`)
 
 ```bash
 cp .env.example .env
 ```
 
-Configure sus credenciales:
-*   `DB_*`: Acceso a la base de datos de control local (MySQL).
-*   `SR_DB_*`: Credenciales de acceso a la base de datos de SoftRestaurant (SQL Server).
-*   `BILLING_PROVIDER`: Define qué API usar por defecto (`factus` o `datainvoice`).
-*   `FACTUS_*` / `DATAINVOICE_*`: Credenciales del respectivo proveedor.
+Variables principales:
+
+```ini
+# Base de datos de control (MySQL)
+DB_HOST=localhost
+DB_NAME=facturas_db
+DB_USER=root
+DB_PASS=secret
+
+# Base de datos SoftRestaurant (SQL Server)
+SR_DB_HOST=192.168.1.100
+SR_DB_NAME=SoftRestaurant
+
+# Proveedor activo: "factus" o "datainvoice"
+BILLING_PROVIDER=factus
+
+# Credenciales Factus
+FACTUS_CLIENT_ID=...
+FACTUS_CLIENT_SECRET=...
+
+# Credenciales DataInvoice
+DATAINVOICE_TOKEN=...
+```
+
+Toda la configuración también puede gestionarse desde el **Panel Web → ⚙️ Configuración**.
 
 ---
 
-## Apoyo al Desarrollo (Donaciones)
+## 📋 Estados de Facturas
 
-Si este software le ha sido de utilidad y desea apoyar su mantenimiento y desarrollo de nuevas funciones, puede realizar una contribución voluntaria:
-
-*   **PayPal:** [paypal.me/maurogarcesd](https://paypal.me/maurogarcesd)
-*   **Correo electrónico:** `maurogarcesd@gmail.com`
+| Estado | Descripción |
+|---|---|
+| `PENDIENTE` | Detectada, esperando procesamiento |
+| `EN_COLA` | En proceso de envío a la DIAN |
+| `ENVIADO` | Aceptada exitosamente por la DIAN |
+| `ERROR` | Rechazada — requiere corrección manual |
+| `OMITIDA` | Excluida por reglas de throttling |
 
 ---
 
-## Servicio de Integración y Consultoría
+## 🔍 Palabras Clave (SEO)
 
-Se ofrece soporte técnico, implementación a medida y acompañamiento para la puesta en marcha de este middleware en restaurantes:
+`facturación electrónica Colombia` · `DIAN` · `SoftRestaurant 9.5` · `Factus` · `DataInvoice` · `UBL 2.1` · `middleware facturación` · `punto de venta restaurante` · `factura electrónica PHP` · `integración DIAN Colombia` · `resolución DIAN` · `obligados factura electrónica`
 
-1. **Instalación y Configuración:** Conexión del middleware con la base de datos de SoftRestaurant 9.5 (entornos locales, en red o Docker).
-2. **Habilitación ante la DIAN:** Acompañamiento en el proceso de pruebas y paso a producción en la plataforma de la DIAN para Factus o DataInvoice.
-3. **Capacitación:** Instrucción al personal de caja y administración sobre el flujo de facturación rápida y el uso del panel de control.
-4. **Desarrollo a Medida:** Adaptaciones específicas según los requerimientos contables o de facturación del negocio.
+---
 
-### Datos de Contacto
+## 💰 Apoyo al Desarrollo
 
-*   **Responsable:** Mauricio Garcés
-*   **Celular / WhatsApp:** [+57 3508902266](https://wa.me/573508902266)
-*   **Ubicación:** Colombia 🇨🇴
+Si este software le ha sido útil, puede apoyar su desarrollo:
+
+- **PayPal:** [paypal.me/maurogarcesd](https://paypal.me/maurogarcesd)
+- **Correo:** `maurogarcesd@gmail.com`
+
+---
+
+## 🛠️ Servicio de Integración y Consultoría
+
+Ofrecemos soporte técnico, implementación a medida y acompañamiento:
+
+1. **Instalación y Configuración** — Entornos locales, en red o Docker
+2. **Habilitación ante la DIAN** — Proceso de pruebas y producción con Factus o DataInvoice
+3. **Capacitación** — Al personal de caja y administración
+4. **Desarrollo a Medida** — Adaptaciones según requerimientos del negocio
+
+### 📞 Contacto
+
+| Canal | Datos |
+|---|---|
+| 👤 Responsable | Mauricio Garcés |
+| 📱 WhatsApp | [+57 350 890 2266](https://wa.me/573508902266) |
+| 🌐 Web | [ksistemas.com](https://ksistemas.com) |
+| 📧 Email | maurogarcesd@gmail.com |
+| 🇨🇴 Ubicación | Colombia |
+
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la [Licencia MIT](LICENSE).
+
+---
+
+*Desarrollado con ❤️ para restaurantes colombianos que necesitan cumplir con la facturación electrónica DIAN de forma simple y automatizada.*
