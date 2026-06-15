@@ -233,47 +233,122 @@
             font-size: 1.5rem;
             cursor: pointer;
         }
+
+        /* Sistema de Pestañas */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .tab-link {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            border-radius: 4px 4px 0 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-link:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .tab-link.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos del Selector de Proveedor Premium */
+        #provider-switcher button {
+            padding: 0.5rem 1.2rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            color: #94a3b8;
+            background: transparent;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        #provider-switcher button:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        #provider-switcher button.active-factus {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.05));
+            color: #10b981;
+            box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.2), 0 0 10px rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        #provider-switcher button.active-datainvoice {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(167, 139, 250, 0.05));
+            color: #a78bfa;
+            box-shadow: inset 0 0 8px rgba(167, 139, 250, 0.2), 0 0 10px rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .form-section-title {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container">
-        <header>
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 1.5rem;">
             <div>
-                <h1 id="page-title">Facturación Automática</h1>
-                <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Monitor de ventas y cola de envíos DIAN
-                    Bendita Comida· <span id="provider-badge"
-                        style="font-weight:700; color: var(--accent);">Cargando...</span></p>
+                <h1 id="page-title" style="font-size: 2.2rem; font-weight: 800; margin: 0; background: -webkit-linear-gradient(#60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Soft Restaurant 9.5</h1>
+                <p style="color: var(--text-muted); margin: 0.4rem 0 0 0; font-size: 0.95rem;">
+                    Integración de Facturación Electrónica · Proveedor: <span id="provider-badge" style="font-weight: 700; color: var(--accent); text-transform: uppercase;">Cargando...</span>
+                </p>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <!-- Selector de Proveedor -->
-                <div id="provider-switcher"
-                    style="display:flex; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 0.85rem;">
-                    <button id="btn-prov-factus" onclick="switchProvider('factus')"
-                        style="padding: 0.45rem 1rem; border: none; cursor: pointer; font-weight: 600; font-family:'Inter',sans-serif; transition: all 0.2s; color: #94a3b8; background: transparent;">
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <!-- Selector de Proveedor Premium -->
+                <div id="provider-switcher" style="display: flex; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px;">
+                    <button id="btn-prov-factus" onclick="switchProvider('factus')">
                         🟢 Factus
                     </button>
-                    <button id="btn-prov-datainvoice" onclick="switchProvider('datainvoice')"
-                        style="padding: 0.45rem 1rem; border: none; cursor: pointer; font-weight: 600; font-family:'Inter',sans-serif; transition: all 0.2s; color: #94a3b8; background: transparent;">
+                    <button id="btn-prov-datainvoice" onclick="switchProvider('datainvoice')">
                         ⚡ DataInvoice
                     </button>
                 </div>
-                <button class="btn" style="background:var(--panel-bg); border:1px solid var(--border);"
-                    onclick="openSettings()" id="btn-settings">⚙️ Configuración</button>
-                <button class="btn" style="background:var(--panel-bg); border:1px solid var(--border);"
-                    onclick="openRanges()" id="btn-ranges">🔢 Rangos</button>
-                <span id="queue-status-text" style="font-weight: 600;">Estado: Cargando...</span>
+                <button class="btn" style="background: var(--panel-bg); border: 1px solid var(--border);" onclick="openSettings()" id="btn-settings">⚙️ Configuración</button>
+                <button class="btn" style="background: var(--panel-bg); border: 1px solid var(--border);" onclick="openRanges()" id="btn-ranges">🔢 Rangos</button>
+                <span id="queue-status-text" style="font-weight: 600; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid var(--border);">Estado: Cargando...</span>
                 <button id="btn-toggle-queue" class="btn" onclick="toggleQueue()">Cargando...</button>
-                <button class="btn"
-                    style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b; font-size:0.8rem;"
-                    onclick="resetPayloads()" title="Regenera todos los payloads pendientes con el proveedor activo">
+                <button class="btn" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; font-size: 0.85rem;" onclick="resetPayloads()" title="Regenera todos los payloads pendientes con el proveedor activo">
                     🔄 Regenerar Payloads
                 </button>
-                <button class="btn"
-                    style="background:rgba(16,185,129,0.15); border:1px solid #10b981; color:#10b981; font-size:0.8rem;"
-                    onclick="processOmitidas()" title="Envía a la DIAN todas las facturas omitidas que ya tengan datos de cliente">
-                    🚀 Enviar Omitidas con Datos
+                <button class="btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; font-size: 0.85rem;" onclick="processOmitidas()" title="Envía a la DIAN todas las facturas omitidas que ya tengan datos de cliente">
+                    🚀 Enviar Omitidas
                 </button>
             </div>
         </header>
@@ -385,86 +460,299 @@
 
     <!-- Modal Settings -->
     <div class="modal-overlay" id="modal-settings">
-        <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal" style="max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
             <button class="close-btn" onclick="closeModals()">&times;</button>
-            <h2 style="display: flex; align-items: center; gap: 0.5rem;">⚙️ Configuración Global</h2>
+            <h2 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">⚙️ Configuración del Sistema</h2>
 
-            <!-- Sección: Numeración y DIAN -->
-            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
-                <h3 style="margin-top:0; color: #a78bfa;">📑 Numeración y DIAN</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>NIT Emisor</label>
-                        <input type="text" id="set-nit">
+            <!-- Navegación de Pestañas -->
+            <div class="tabs-nav">
+                <button class="tab-link active" onclick="switchSettingsTab(event, 'tab-general')">⚙️ General</button>
+                <button class="tab-link" onclick="switchSettingsTab(event, 'tab-factus')">🟢 Factus</button>
+                <button class="tab-link" onclick="switchSettingsTab(event, 'tab-datainvoice')">⚡ DataInvoice</button>
+            </div>
+
+            <!-- CONTENIDO DE PESTAÑA: GENERAL -->
+            <div id="tab-general" class="tab-content active">
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Parámetros del Middleware</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Proveedor Activo</label>
+                            <select id="set-provider-env" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 6px; font-family:'Inter';">
+                                <option value="factus">Factus (V2)</option>
+                                <option value="datainvoice">DataInvoice (UBL 2.1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Patrón de Emisión (Throttling)</label>
+                            <select id="set-pattern" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 6px; font-family:'Inter';">
+                                <option value="ALL">1 de 1 (Enviar todas - Recomendado)</option>
+                                <option value="1_OF_2">1 de 2 (Intercalado - Una sí, una no)</option>
+                                <option value="1_OF_3">1 de 3 (Una sí, dos no)</option>
+                                <option value="RANDOM_50">Aleatorio (Enviar el 50% al azar)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Prefijo</label>
-                        <input type="text" id="set-prefix">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Valor UVT (COP)</label>
+                            <input type="number" id="set-uvt">
+                        </div>
+                        <div class="form-group">
+                            <label>Umbral Alerta Soporte (Ventas fallidas)</label>
+                            <input type="number" id="set-alert-threshold">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Retraso de la Cola (Minutos)</label>
+                            <input type="number" id="setting-delay" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Límite de Edición (Horas)</label>
+                            <input type="number" id="set-edit-limit" min="1">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Tasa de Impuesto por Defecto (%)</label>
+                            <input type="text" id="set-default-tax-rate">
+                        </div>
+                        <div class="form-group">
+                            <label>Matrícula Mercantil (Opcional)</label>
+                            <input type="text" id="set-merchant-registration">
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Número de Resolución</label>
-                    <input type="text" id="set-resolution">
+
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Base de Datos Local (MySQL)</div>
+                    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Host MySQL</label>
+                            <input type="text" id="set-db-host">
+                        </div>
+                        <div class="form-group">
+                            <label>Puerto</label>
+                            <input type="text" id="set-db-port">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Base de Datos</label>
+                            <input type="text" id="set-db-database">
+                        </div>
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <input type="text" id="set-db-username">
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="set-db-password">
+                        </div>
+                    </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Desde Número</label>
-                        <input type="number" id="set-from">
+
+                <div class="glass-panel" style="padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Base de Datos SoftRestaurant (SQL Server)</div>
+                    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Host SQL Server</label>
+                            <input type="text" id="set-sr-host">
+                        </div>
+                        <div class="form-group">
+                            <label>Puerto</label>
+                            <input type="text" id="set-sr-port">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Hasta Número</label>
-                        <input type="number" id="set-to">
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Valor UVT (Actual)</label>
-                        <input type="number" id="set-uvt">
-                    </div>
-                    <div class="form-group">
-                        <label>ID Unidad Medida</label>
-                        <input type="number" id="set-unit">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Base de Datos</label>
+                            <input type="text" id="set-sr-database">
+                        </div>
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <input type="text" id="set-sr-username">
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="set-sr-password">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Sección: Patrón de Emisión (Throttling) -->
-            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem; border-color: #f59e0b;">
-                <h3 style="margin-top:0; color: #f59e0b;">⚖️ Patrón de Emisión (Throttling)</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-                    Decide qué proporción de facturas se envían automáticamente a la DIAN.
-                </p>
-                <select id="set-pattern" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                    <option value="ALL">1 de 1 (Enviar todas - Recomendado)</option>
-                    <option value="1_OF_2">1 de 2 (Intercalado - Una sí, una no)</option>
-                    <option value="1_OF_3">1 de 3 (Una sí, dos no)</option>
-                    <option value="RANDOM_50">Aleatorio (Enviar el 50% al azar)</option>
-                </select>
+            <!-- CONTENIDO DE PESTAÑA: FACTUS -->
+            <div id="tab-factus" class="tab-content">
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Credenciales de API Factus</div>
+                    <div class="form-group">
+                        <label>URL de API Factus</label>
+                        <input type="text" id="set-factus-url" placeholder="https://api-sandbox.factus.com.co o https://api.factus.com.co">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Correo Electrónico (Usuario)</label>
+                            <input type="email" id="set-factus-email">
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña de Acceso</label>
+                            <input type="password" id="set-factus-password">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Client ID</label>
+                            <input type="text" id="set-factus-client-id">
+                        </div>
+                        <div class="form-group">
+                            <label>Client Secret</label>
+                            <input type="password" id="set-factus-client-secret">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Códigos DIAN & Impuestos</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Código de Unidad de Medida (Default: 94)</label>
+                            <input type="text" id="set-factus-unit-code">
+                        </div>
+                        <div class="form-group">
+                            <label>ID de Impuesto (Factus: 5=INC, 1=IVA)</label>
+                            <input type="text" id="set-factus-tax-id">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Código Fiscal del Impuesto (Factus: 04=INC, 01=IVA)</label>
+                            <input type="text" id="set-factus-tax-code">
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre del Impuesto (Factus: INC o IVA)</label>
+                            <input type="text" id="set-factus-tax-name">
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Sección: Otros -->
-            <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
-                <h3 style="margin-top:0; color: #10b981;">📧 Notificaciones y Otros</h3>
-                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="checkbox" id="set-mail" style="width: auto;">
-                    <label style="margin:0;">Enviar correo al cliente automáticamente</label>
+            <!-- CONTENIDO DE PESTAÑA: DATAINVOICE -->
+            <div id="tab-datainvoice" class="tab-content">
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Credenciales de API DataInvoice</div>
+                    <div class="form-group">
+                        <label>URL de API DataInvoice</label>
+                        <input type="text" id="set-di-url" placeholder="https://api.datainvoicecolombia.com/api/ubl2.1">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>NIT Emisor (DataInvoice)</label>
+                            <input type="text" id="set-di-nit">
+                        </div>
+                        <div class="form-group">
+                            <label>Token / API Key</label>
+                            <input type="password" id="set-di-token">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="checkbox" id="set-mail-me" style="width: auto;">
-                    <label style="margin:0;">Enviarme una copia de cada factura</label>
+
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Rangos y Resolución DIAN</div>
+                    <div class="form-group">
+                        <label>Número de Resolución</label>
+                        <input type="text" id="set-di-resolution">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Prefijo</label>
+                            <input type="text" id="set-di-prefix">
+                        </div>
+                        <div class="form-group">
+                            <label>Desde Número</label>
+                            <input type="number" id="set-di-from">
+                        </div>
+                        <div class="form-group">
+                            <label>Hasta Número</label>
+                            <input type="number" id="set-di-to">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Retraso de la Cola (Minutos)</label>
-                    <input type="number" id="setting-delay" min="0">
+
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Datos del Establecimiento (Emisor)</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nombre Comercial</label>
+                            <input type="text" id="set-di-est-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" id="set-di-est-addr">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" id="set-di-est-phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Email del Establecimiento</label>
+                            <input type="email" id="set-di-est-email">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Código Municipio Emisor</label>
+                            <input type="number" id="set-di-est-muni">
+                        </div>
+                        <div class="form-group">
+                            <label>ID Municipio por Defecto (Clientes)</label>
+                            <input type="number" id="set-di-cli-muni">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Email Clientes por Defecto</label>
+                            <input type="email" id="set-di-default-email">
+                        </div>
+                        <div class="form-group">
+                            <label>ID Unidad de Medida (Default: 70)</label>
+                            <input type="text" id="set-di-unit-id">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Límite de Edición (Horas)</label>
-                    <input type="number" id="set-edit-limit" value="24" min="1">
-                    <small style="color:var(--text-muted); font-size:0.75rem;">Tiempo máximo permitido para identificar un cliente.</small>
+
+                <div class="glass-panel" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <div class="form-section-title" style="margin-top:0;">Impuestos, Régimen y Envíos</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Tax ID (DataInvoice: 4=INC, 1=IVA)</label>
+                            <input type="text" id="set-di-tax-id">
+                        </div>
+                        <div class="form-group">
+                            <label>Regime ID (DataInvoice: 2=No resp)</label>
+                            <input type="text" id="set-di-regime-id">
+                        </div>
+                        <div class="form-group">
+                            <label>Liability ID (DataInvoice: 7=No resp)</label>
+                            <input type="text" id="set-di-liability-id">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="set-di-send-mail" style="width: auto;">
+                            <label style="margin:0;">Enviar correo al cliente automáticamente</label>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="set-di-send-mail-me" style="width: auto;">
+                            <label style="margin:0;">Enviarme copia de cada factura</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
                 <button class="btn" style="background: transparent; border: 1px solid var(--border);" onclick="closeModals()">Cancelar</button>
                 <button class="btn btn-success" onclick="saveAllSettings()">💾 Guardar Todo</button>
             </div>
@@ -493,19 +781,15 @@
             const diBtn = document.getElementById('btn-prov-datainvoice');
             const rangesBtn = document.getElementById('btn-ranges');
 
-            // Reset both
-            factusBtn.style.background = 'transparent';
-            factusBtn.style.color = '#94a3b8';
-            diBtn.style.background = 'transparent';
-            diBtn.style.color = '#94a3b8';
+            // Reset classes
+            factusBtn.className = '';
+            diBtn.className = '';
 
             if (provider === 'datainvoice') {
-                diBtn.style.background = 'rgba(167,139,250,0.2)';
-                diBtn.style.color = '#a78bfa';
+                diBtn.classList.add('active-datainvoice');
                 rangesBtn.style.display = 'none';
             } else {
-                factusBtn.style.background = 'rgba(16,185,129,0.2)';
-                factusBtn.style.color = '#10b981';
+                factusBtn.classList.add('active-factus');
                 rangesBtn.style.display = '';
             }
         }
@@ -898,59 +1182,203 @@
 
         let currentCompanyData = null;
 
+        function switchSettingsTab(event, tabId) {
+            // Ocultar todos los contenidos de pestaña
+            const contents = document.querySelectorAll('#modal-settings .tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Quitar clase activa de todos los enlaces
+            const links = document.querySelectorAll('#modal-settings .tab-link');
+            links.forEach(l => l.classList.remove('active'));
+
+            // Mostrar la pestaña actual y activar el enlace
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
         async function openSettings() {
             document.getElementById('modal-settings').style.display = 'flex';
+            
+            // Forzar pestaña general activa al abrir
+            const defaultTabLink = document.querySelector('#modal-settings .tab-link');
+            if (defaultTabLink) {
+                const mockEvent = { currentTarget: defaultTabLink };
+                switchSettingsTab(mockEvent, 'tab-general');
+            }
+
             try {
                 const res = await fetch('/api.php?action=get_all_settings');
                 const json = await res.json();
                 if (json.status === 'success') {
                     const s = json.data;
-                    document.getElementById('set-nit').value = s.DATAINVOICE_NIT || '';
-                    document.getElementById('set-prefix').value = s.DATAINVOICE_PREFIX || '';
-                    document.getElementById('set-resolution').value = s.DATAINVOICE_RESOLUTION_NUMBER || '';
-                    document.getElementById('set-from').value = s.DATAINVOICE_NUMBER_FROM || '';
-                    document.getElementById('set-to').value = s.DATAINVOICE_NUMBER_TO || '';
+                    
+                    // Pestaña General
+                    document.getElementById('set-provider-env').value = s.BILLING_PROVIDER || 'factus';
+                    document.getElementById('set-pattern').value = s.EMISSION_PATTERN || 'ALL';
                     document.getElementById('set-uvt').value = s.VALOR_UVT || '';
-                    document.getElementById('set-unit').value = s.DATAINVOICE_UNIT_MEASURE_ID || '';
-                    document.getElementById('set-pattern').value = s.EMISSION_PATTERN || '';
-                    document.getElementById('set-mail').checked = s.DATAINVOICE_SEND_MAIL === 'true';
-                    document.getElementById('set-mail-me').checked = s.DATAINVOICE_SEND_MAIL_TO_ME === 'true';
-                    document.getElementById('set-edit-limit').value = s.MAX_EDIT_HOURS || '';
+                    document.getElementById('set-alert-threshold').value = s.ALERT_THRESHOLD || '5';
+                    document.getElementById('set-edit-limit').value = s.MAX_EDIT_HOURS || '24';
+                    document.getElementById('set-default-tax-rate').value = s.DEFAULT_TAX_RATE || '8.00';
+                    document.getElementById('set-merchant-registration').value = s.MERCHANT_REGISTRATION || '0000000';
+
+                    // Pestaña General - MySQL
+                    document.getElementById('set-db-host').value = s.DB_HOST || '';
+                    document.getElementById('set-db-port').value = s.DB_PORT || '3306';
+                    document.getElementById('set-db-database').value = s.DB_DATABASE || '';
+                    document.getElementById('set-db-username').value = s.DB_USERNAME || '';
+                    document.getElementById('set-db-password').value = s.DB_PASSWORD || '';
+
+                    // Pestaña General - SQL Server
+                    document.getElementById('set-sr-host').value = s.SR_DB_HOST || '';
+                    document.getElementById('set-sr-port').value = s.SR_DB_PORT || '1433';
+                    document.getElementById('set-sr-database').value = s.SR_DB_DATABASE || '';
+                    document.getElementById('set-sr-username').value = s.SR_DB_USERNAME || '';
+                    document.getElementById('set-sr-password').value = s.SR_DB_PASSWORD || '';
+
+                    // Pestaña Factus
+                    document.getElementById('set-factus-url').value = s.FACTUS_API_URL || '';
+                    document.getElementById('set-factus-email').value = s.FACTUS_EMAIL || '';
+                    document.getElementById('set-factus-password').value = s.FACTUS_PASSWORD || '';
+                    document.getElementById('set-factus-client-id').value = s.FACTUS_CLIENT_ID || '';
+                    document.getElementById('set-factus-client-secret').value = s.FACTUS_CLIENT_SECRET || '';
+                    document.getElementById('set-factus-unit-code').value = s.FACTUS_UNIT_MEASURE_CODE || '94';
+                    document.getElementById('set-factus-tax-id').value = s.FACTUS_TAX_ID || '5';
+                    document.getElementById('set-factus-tax-code').value = s.FACTUS_TAX_CODE || '04';
+                    document.getElementById('set-factus-tax-name').value = s.FACTUS_TAX_NAME || 'INC';
+
+                    // Pestaña DataInvoice
+                    document.getElementById('set-di-url').value = s.DATAINVOICE_API_URL || '';
+                    document.getElementById('set-di-nit').value = s.DATAINVOICE_NIT || '';
+                    document.getElementById('set-di-token').value = s.DATAINVOICE_TOKEN || '';
+                    document.getElementById('set-di-resolution').value = s.DATAINVOICE_RESOLUTION_NUMBER || '';
+                    document.getElementById('set-di-prefix').value = s.DATAINVOICE_PREFIX || '';
+                    document.getElementById('set-di-from').value = s.DATAINVOICE_NUMBER_FROM || '';
+                    document.getElementById('set-di-to').value = s.DATAINVOICE_NUMBER_TO || '';
+                    document.getElementById('set-di-est-name').value = s.DATAINVOICE_ESTABLISHMENT_NAME || '';
+                    document.getElementById('set-di-est-addr').value = s.DATAINVOICE_ESTABLISHMENT_ADDRESS || '';
+                    document.getElementById('set-di-est-phone').value = s.DATAINVOICE_ESTABLISHMENT_PHONE || '';
+                    document.getElementById('set-di-est-email').value = s.DATAINVOICE_ESTABLISHMENT_EMAIL || '';
+                    document.getElementById('set-di-est-muni').value = s.DATAINVOICE_ESTABLISHMENT_MUNICIPALITY || '';
+                    document.getElementById('set-di-cli-muni').value = s.DATAINVOICE_MUNICIPALITY_ID || '';
+                    document.getElementById('set-di-default-email').value = s.DATAINVOICE_DEFAULT_EMAIL || '';
+                    document.getElementById('set-di-unit-id').value = s.DATAINVOICE_UNIT_MEASURE_ID || '70';
+                    document.getElementById('set-di-tax-id').value = s.DATAINVOICE_TAX_ID || '4';
+                    document.getElementById('set-di-regime-id').value = s.DATAINVOICE_REGIME_ID || '2';
+                    document.getElementById('set-di-liability-id').value = s.DATAINVOICE_LIABILITY_ID || '7';
+                    document.getElementById('set-di-send-mail').checked = s.DATAINVOICE_SEND_MAIL === 'true';
+                    document.getElementById('set-di-send-mail-me').checked = s.DATAINVOICE_SEND_MAIL_TO_ME === 'true';
                 }
             } catch (e) { console.error(e); }
         }
 
         async function saveAllSettings() {
             const data = {
-                DATAINVOICE_NIT: document.getElementById('set-nit').value,
-                DATAINVOICE_PREFIX: document.getElementById('set-prefix').value,
-                DATAINVOICE_RESOLUTION_NUMBER: document.getElementById('set-resolution').value,
-                DATAINVOICE_NUMBER_FROM: document.getElementById('set-from').value,
-                DATAINVOICE_NUMBER_TO: document.getElementById('set-to').value,
-                VALOR_UVT: document.getElementById('set-uvt').value,
-                DATAINVOICE_UNIT_MEASURE_ID: document.getElementById('set-unit').value,
+                // General
+                BILLING_PROVIDER: document.getElementById('set-provider-env').value,
                 EMISSION_PATTERN: document.getElementById('set-pattern').value,
-                DATAINVOICE_SEND_MAIL: document.getElementById('set-mail').checked ? 'true' : 'false',
-                DATAINVOICE_SEND_MAIL_TO_ME: document.getElementById('set-mail-me').checked ? 'true' : 'false',
-                MAX_EDIT_HOURS: document.getElementById('set-edit-limit').value
+                VALOR_UVT: document.getElementById('set-uvt').value,
+                ALERT_THRESHOLD: document.getElementById('set-alert-threshold').value,
+                MAX_EDIT_HOURS: document.getElementById('set-edit-limit').value,
+                DEFAULT_TAX_RATE: document.getElementById('set-default-tax-rate').value,
+                MERCHANT_REGISTRATION: document.getElementById('set-merchant-registration').value,
+                
+                // MySQL
+                DB_HOST: document.getElementById('set-db-host').value,
+                DB_PORT: document.getElementById('set-db-port').value,
+                DB_DATABASE: document.getElementById('set-db-database').value,
+                DB_USERNAME: document.getElementById('set-db-username').value,
+                DB_PASSWORD: document.getElementById('set-db-password').value,
+
+                // SQL Server
+                SR_DB_HOST: document.getElementById('set-sr-host').value,
+                SR_DB_PORT: document.getElementById('set-sr-port').value,
+                SR_DB_DATABASE: document.getElementById('set-sr-database').value,
+                SR_DB_USERNAME: document.getElementById('set-sr-username').value,
+                SR_DB_PASSWORD: document.getElementById('set-sr-password').value,
+
+                // Factus
+                FACTUS_API_URL: document.getElementById('set-factus-url').value,
+                FACTUS_EMAIL: document.getElementById('set-factus-email').value,
+                FACTUS_PASSWORD: document.getElementById('set-factus-password').value,
+                FACTUS_CLIENT_ID: document.getElementById('set-factus-client-id').value,
+                FACTUS_CLIENT_SECRET: document.getElementById('set-factus-client-secret').value,
+                FACTUS_UNIT_MEASURE_CODE: document.getElementById('set-factus-unit-code').value,
+                FACTUS_TAX_ID: document.getElementById('set-factus-tax-id').value,
+                FACTUS_TAX_CODE: document.getElementById('set-factus-tax-code').value,
+                FACTUS_TAX_NAME: document.getElementById('set-factus-tax-name').value,
+
+                // DataInvoice
+                DATAINVOICE_API_URL: document.getElementById('set-di-url').value,
+                DATAINVOICE_NIT: document.getElementById('set-di-nit').value,
+                DATAINVOICE_TOKEN: document.getElementById('set-di-token').value,
+                DATAINVOICE_RESOLUTION_NUMBER: document.getElementById('set-di-resolution').value,
+                DATAINVOICE_PREFIX: document.getElementById('set-di-prefix').value,
+                DATAINVOICE_NUMBER_FROM: document.getElementById('set-di-from').value,
+                DATAINVOICE_NUMBER_TO: document.getElementById('set-di-to').value,
+                DATAINVOICE_ESTABLISHMENT_NAME: document.getElementById('set-di-est-name').value,
+                DATAINVOICE_ESTABLISHMENT_ADDRESS: document.getElementById('set-di-est-addr').value,
+                DATAINVOICE_ESTABLISHMENT_PHONE: document.getElementById('set-di-est-phone').value,
+                DATAINVOICE_ESTABLISHMENT_EMAIL: document.getElementById('set-di-est-email').value,
+                DATAINVOICE_ESTABLISHMENT_MUNICIPALITY: document.getElementById('set-di-est-muni').value,
+                DATAINVOICE_MUNICIPALITY_ID: document.getElementById('set-di-cli-muni').value,
+                DATAINVOICE_DEFAULT_EMAIL: document.getElementById('set-di-default-email').value,
+                DATAINVOICE_UNIT_MEASURE_ID: document.getElementById('set-di-unit-id').value,
+                DATAINVOICE_TAX_ID: document.getElementById('set-di-tax-id').value,
+                DATAINVOICE_REGIME_ID: document.getElementById('set-di-regime-id').value,
+                DATAINVOICE_LIABILITY_ID: document.getElementById('set-di-liability-id').value,
+                DATAINVOICE_SEND_MAIL: document.getElementById('set-di-send-mail').checked ? 'true' : 'false',
+                DATAINVOICE_SEND_MAIL_TO_ME: document.getElementById('set-di-send-mail-me').checked ? 'true' : 'false'
             };
+
             const delay = document.getElementById('setting-delay').value;
+            Swal.fire({
+                title: 'Guardando configuración...',
+                text: 'Escribiendo cambios en el archivo .env',
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: '#f8fafc',
+                didOpen: () => Swal.showLoading()
+            });
+
             try {
-                await fetch('/api.php?action=save_all_settings', {
+                const saveEnvRes = await fetch('/api.php?action=save_all_settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
+                const envResult = await saveEnvRes.json();
+                
+                if (envResult.status !== 'success') {
+                    throw new Error(envResult.message || 'Error al actualizar .env');
+                }
+
                 await fetch('/api.php?action=update_settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ delay_minutes: delay })
                 });
-                Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Cambios aplicados.', background: '#1e293b', color: '#f8fafc', timer: 2000, showConfirmButton: false });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Guardado!',
+                    text: 'Variables de entorno actualizadas con éxito.',
+                    background: '#1e293b',
+                    color: '#f8fafc',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+
                 closeModals();
+                await detectProvider();
                 loadData();
             } catch (e) {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar.', background: '#1e293b', color: '#f8fafc' });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al guardar',
+                    text: e.message || 'No se pudo guardar la configuración.',
+                    background: '#1e293b',
+                    color: '#f8fafc'
+                });
             }
         }
 
